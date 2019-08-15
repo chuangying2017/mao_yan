@@ -85,10 +85,9 @@ def main(offset):
 def save_data(list):
     ls = []
     for dist_v in list:
-        ls.append(dist_v.values())
-    print(ls)
-    exit('success')
+        ls.append(tuple(dist_v.values()))
     # Connect to the database
+
     connection = pymysql.connect(host='127.0.0.1',
                                  user='root',
                                  password='123456',
@@ -100,20 +99,20 @@ def save_data(list):
     try:
         with connection.cursor() as cursor:
             # Create a new record
-            sql = "INSERT INTO `maoyan` (`rank`, `title`, `actor`, `time`, `score`) VALUES (%s, %s)"
-            for v in list:
+            sql = "INSERT INTO `maoyan` (`rank`, `title`, `actor`, `time`, `score`) VALUES (%s, %s, %s, %s, %s)"
+            for v in ls:
                 cursor.execute(sql, v)
 
         # connection is not autocommit by default. So you must commit to save
         # your changes.
         connection.commit()
-
-        with connection.cursor() as cursor:
-            # Read a single record
-            sql = "SELECT `rank`, `title`, `actor`, `time`, `score` FROM `maoyan` WHERE `title`=%s"
-            cursor.execute(sql, (v[1],))
-            result = cursor.fetchone()
-            print(result)
+        print('success')
+        # with connection.cursor() as cursor:
+        #     # Read a single record
+        #     sql = "SELECT `rank`, `title`, `actor`, `time`, `score` FROM `maoyan` WHERE `title`=%s"
+        #     cursor.execute(sql, (v[1],))
+        #     result = cursor.fetchone()
+        #     print(result)
     finally:
         connection.close()
 
@@ -129,3 +128,4 @@ if __name__ == '__main__':
     pool = Pool()
     # map方法会把每个元素当做函数的参数,创建一个个进程,在进程池中运行.
     pool.map(main, [i * 10 for i in range(10)])
+

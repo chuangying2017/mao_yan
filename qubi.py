@@ -1,14 +1,16 @@
-import csv
+from multiprocessing import Pool
+import random
 import requests
-from multiprocessing import Pool, Process, ProcessError
+import time
 from pyquery import PyQuery
+import os
 
 
 url = 'https://www.xbiquge6.com/'
 header = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                         "Chrome/76.0.3809.100 Safari/537.36",
           'Host': 'www.xbiquge6.com'}
-local_url = 'http://192.168.1.7:8093/'
+local_url = 'http://192.168.1.9:8093/'
 proxies = {
     "http": "http://113.116.58.38:9000",
     "https": "https://163.204.243.39:9999",
@@ -19,7 +21,7 @@ def index():
     pass
 
 
-def get_proxies()-> dict:
+def get_proxies() -> dict:
     proxyHost = "http-pro.abuyun.com"
     proxyPort = "9010"
     # 代理隧道验证信息
@@ -46,15 +48,16 @@ def request_post(tup):
     # res = requests.get(url, headers=header)
     prefix = tup[0]
     suffix_mode = tup[1]
-
     split = '_'
     request_param = str(prefix) + split + str(suffix_mode)
     url += request_param
-    res = requests.get(url, headers=header)
+    print("start time " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    res = requests.get(url, headers=header, timeout=5)
     if res.status_code in (200, 201):
+        print('页面正在解析.....')
         jq = PyQuery(res.content)
         type_class_name = jq('div.box_con div.con_top a').eq(1).text()
-        result_type = requests.post(local_url + 'polls/get_fiction/', data={'title': type_class_name}, proxies=proxies)
+        result_type = requests.post(local_url + 'polls/get_fiction/', data={'title': type_class_name})
         json_data = result_type.json()
         maininfo = jq('#maininfo')
         info = maininfo.find('#info')
@@ -62,15 +65,46 @@ def request_post(tup):
         all_tup = ()
         all_p = info.find('p')
         for p in all_p.items():
-            all_tup += (p.text().split('：')[1], )
-        author, status_data, latest_update_time, latest_chapter = all_tup
+            all_tup += (p.text().split('：')[1],)
+        author, status_data, last_update_time, latest_chapter = all_tup
         desc: str = info.siblings('div').find('p').eq(0).html()
-        class_id = json_data['id']
-        print(desc)
+        class_id = json_data['id']  # 将数据插入小说表
+        fiction_json = requests.post(local_url + 'polls/post_fiction_create/', data={
+            'author': author, 'status': status_data, 'last_update_time': last_update_time,
+            'latest_chapter': latest_chapter, 'desc': desc, 'class_id': class_id, 'title': title
+        }, timeout=3)
+        fiction_json = fiction_json.json()
+        fiction_id = fiction_json['id']
+        result: list = []
+        box_con = jq('#list dl').find('dd')
+        for k, vs in enumerate(box_con.items()):
+            a = vs('a')
+            request_url = url + '/' + a.attr('href').split('/')[-1]
+            request_result = requests.get(request_url, headers=header, timeout=5)
+            title_ = a.text()
+            if '第' in title_:
+                ls_title = title_.split(' ')
+                chapter = ls_title[0]
+                fiction_chapter_title = ls_title[1]
+            else:
+                fiction_chapter_title = title_
+                chapter = ''
 
+            if request_result.status_code == 200:
+                content = PyQuery(request_result.content)
+                content_data = content('#content').html()
+                data_fiction_chapter: dict = {
+                    'fiction_id': fiction_id,
+                    'chapter': chapter,
+                    'title': fiction_chapter_title,
+                    'content': content_data
+                }
+                requests.post(local_url + 'polls/post_fiction_chapter/',
+                              data=data_fiction_chapter, timeout=3)
 
+            time.sleep(random.uniform(0.3, 3.1))
 
-
+        print('正在写作中.....')
     elif res.status_code > 400:
         print('页面没找到')
 
@@ -85,16 +119,31 @@ def param(start_val, end_val=0) -> str:
     print(num_val)
 
 
+def func_forward(tup: tuple = ()):
 
-def parse_html():
-    pass
+    filename = str(tup[0]) + '.txt'
+
+    if os.path.exists(filename):
+        open_file = open(filename, 'r+')
+        read_line = open_file.readline()
+        tup = tuple(eval(read_line))
+    else:
+        open_file = open(filename, 'w')
+
+    origin_vs = tup[0]
+    vs = 10 + origin_vs
+
+    for i in range(origin_vs, vs):
+        for j in range(tup[1]):
+            tup1 = (i, j + 1)
+            print(tup1)
+            request_post(tup1)
+            open_file.write(','.join('%d' %d for d in tup1))
+            time.sleep(random.uniform(0.5, 2))
+    open_file.close()
 
 
 if __name__ == '__main__':
-    # param(90, 990000)
-    # pool = Pool(processes=3)
-    request_post((0, 1))
-    exit()
     ls: list = []
     suffix = 99
     min_num = 999999
@@ -104,4 +153,8 @@ if __name__ == '__main__':
         ls.append((suffix, min_num))
         if suffix <= 9:
             ls.append((0, min_num))
-    print(ls)
+    ls.sort()
+    pool = Pool(processes=10)
+    pool.map(func_forward, ls)
+    pool.close()
+    pool.join()

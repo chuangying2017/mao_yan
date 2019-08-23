@@ -21,8 +21,27 @@
 # res = driver.find_element('class', 'rank-wrap box-center mb20')
 #
 # print(res)
+import os
 
 
-dist = {'1':'feno', 'fe0':'fen', "fnf": "121"}
 
-ls = []
+
+
+
+
+tup = (0, 1)
+
+filename = str(tup[0]) + '.txt'
+if os.path.exists(filename):
+    res = open(filename, 'r+')
+    read_line = res.readline()
+    res.close()
+    tup1 = tuple(eval(read_line))
+    print(eval(read_line))
+else:
+    res = open(filename, 'w')
+    res.write(','.join('%d' %d for d in tup))
+    res.close()
+
+
+

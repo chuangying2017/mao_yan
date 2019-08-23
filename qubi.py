@@ -75,34 +75,25 @@ def request_post(tup):
         }, timeout=3)
         fiction_json = fiction_json.json()
         fiction_id = fiction_json['id']
-        result: list = []
         box_con = jq('#list dl').find('dd')
         for k, vs in enumerate(box_con.items()):
             a = vs('a')
             request_url = url + '/' + a.attr('href').split('/')[-1]
             request_result = requests.get(request_url, headers=header, timeout=5)
             title_ = a.text()
-            if '第' in title_:
-                ls_title = title_.split(' ')
-                chapter = ls_title[0]
-                fiction_chapter_title = ls_title[1]
-            else:
-                fiction_chapter_title = title_
-                chapter = ''
 
             if request_result.status_code == 200:
                 content = PyQuery(request_result.content)
                 content_data = content('#content').html()
                 data_fiction_chapter: dict = {
                     'fiction_id': fiction_id,
-                    'chapter': chapter,
-                    'title': fiction_chapter_title,
+                    'title': title_,
                     'content': content_data
                 }
                 requests.post(local_url + 'polls/post_fiction_chapter/',
                               data=data_fiction_chapter, timeout=3)
 
-            time.sleep(random.uniform(0.3, 3.1))
+            time.sleep(random.uniform(0.3, 2.1))
 
         print('正在写作中.....')
     elif res.status_code > 400:
@@ -127,6 +118,8 @@ def func_forward(tup: tuple = ()):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
         tup = tuple(eval(read_line))
+        if tup.__len__() < 1:
+            raise InterruptedError
     else:
         open_file = open(filename, 'w')
 
@@ -138,7 +131,9 @@ def func_forward(tup: tuple = ()):
             tup1 = (i, j + 1)
             print(tup1)
             request_post(tup1)
-            open_file.write(','.join('%d' %d for d in tup1))
+            open_file.write(','.join('%s' %id for id in tup1))
+            open_file.close()
+            open_file = open(filename, 'r+')
             time.sleep(random.uniform(0.5, 2))
     open_file.close()
 
@@ -146,7 +141,7 @@ def func_forward(tup: tuple = ()):
 if __name__ == '__main__':
     ls: list = []
     suffix = 99
-    min_num = 999999
+    min_num = 99999
     v = 10
     while suffix > 9:
         suffix = suffix - v

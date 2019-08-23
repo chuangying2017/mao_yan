@@ -22,26 +22,21 @@
 #
 # print(res)
 import os
+import requests
 
 
 
 
+ls:list = []
+
+for i in range(100):
+    ls.append({'name': 'zahng', 'age': '23'})
 
 
 
-tup = (0, 1)
+res = requests.post('http://192.168.1.9:8093/polls/post_fiction_chapter/', data=[{'name': 'zahng', 'age': '23'}, {'name': 'zahng', 'age': '23'}, {'name': 'zahng', 'age': '23'},{'name': 'zahng', 'age': '23'}])
 
-filename = str(tup[0]) + '.txt'
-if os.path.exists(filename):
-    res = open(filename, 'r+')
-    read_line = res.readline()
-    res.close()
-    tup1 = tuple(eval(read_line))
-    print(eval(read_line))
-else:
-    res = open(filename, 'w')
-    res.write(','.join('%d' %d for d in tup))
-    res.close()
+print(res)
 
 
 

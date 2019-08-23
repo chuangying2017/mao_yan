@@ -113,13 +113,13 @@ def param(start_val, end_val=0) -> str:
 def func_forward(tup: tuple = ()):
 
     filename = str(tup[0]) + '.txt'
-
+    back_tup = tup
     if os.path.exists(filename):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
         tup = tuple(eval(read_line))
         if tup.__len__() < 1:
-            raise InterruptedError
+            tup = back_tup
     else:
         open_file = open(filename, 'w')
 
@@ -134,11 +134,13 @@ def func_forward(tup: tuple = ()):
             open_file.write(','.join('%s' %id for id in tup1))
             open_file.close()
             open_file = open(filename, 'r+')
-            time.sleep(random.uniform(0.5, 2))
+            time.sleep(random.uniform(0.5, 1.8))
     open_file.close()
 
 
 if __name__ == '__main__':
+    func_forward((0, 9))
+    exit()
     ls: list = []
     suffix = 99
     min_num = 99999
@@ -150,6 +152,6 @@ if __name__ == '__main__':
             ls.append((0, min_num))
     ls.sort()
     pool = Pool(processes=10)
-    pool.map(func_forward, ls)
+    pool.map_async(func_forward, ls)
     pool.close()
     pool.join()

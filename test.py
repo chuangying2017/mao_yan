@@ -52,6 +52,7 @@ def fetch_fiction(tup: tuple = (0, 2)):
     chrome_options.add_argument('--disable-gpu')
     browser = webdriver.Chrome(options=chrome_options)
     new_url = url + str(tup[0]) + '_' + str(tup[1]) + '/'
+    print(new_url)
     try:
         browser.get(new_url)
         id_list = browser.find_element_by_id('list')
@@ -100,7 +101,7 @@ def fetch_fiction(tup: tuple = (0, 2)):
         f.write(json.dumps(fiction))
         f.close()
         try:
-            batch_data(path+'\\'+filename)
+            batch_data(filename, path)
         except EnvironmentError:
             print('环境出错')
     except TimeoutException:
@@ -116,18 +117,22 @@ def func_forward(tup: tuple = (0, 3)):
     new_num = 0
     if tup[0] == 0:
         new_num = 4
-    origin_vs = tup[0]
-    vs = 10 + origin_vs
+    origin = 10
     filename = str(tup[0]) + '.txt'
     back_tup = tup
     if os.path.exists(filename):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
-        tup = tuple(eval(read_line))
-        if tup.__len__() < 1:
+        new_tup = tuple(eval(read_line))
+        tup[0] = new_tup[0]
+        new_num = new_tup[1]
+        if len(tup) < 1:
             tup = back_tup
     else:
-        open_file = open(filename, 'w')
+        open_file = open(filename, 'w+')
+
+    origin_vs = tup[0]
+    vs = 10 + origin_vs
 
     for i in range(origin_vs, vs):
         for j in range(new_num, tup[1]):
@@ -138,13 +143,16 @@ def func_forward(tup: tuple = (0, 3)):
             except Exception:
                 print('数据库插入异常')
             finally:
-                print('继续执行....' + str(j))
-            open_file.write(','.join('%s' %id for id in tup1))
-            open_file.close()
-            open_file = open(filename, 'r+')
-            time.sleep(random.uniform(0.5, 1.8))
+                print('继续前进....' + str(i) + '_' + str(tup1[1]))
+                open_file.seek(0)
+                open_file.truncate()
+                open_file.write(','.join('%s' % id for id in tup1))
+                open_file.close()
+                open_file = open(filename, 'r+')
+            # time.sleep(random.uniform(0.5, 1.8))
+        print('结束这一次...' + str(i) + '_' + str(tup1[1]))
         filename = str(i) + '.txt'
-        open(filename, 'w')
+        open_file = open(filename, 'w+')
     open_file.close()
 
 
@@ -182,7 +190,7 @@ def t_request():
         browser.close()
 
 
-def batch_data(filename: str):
+def batch_data(filename: str, path):
 
     try:
 
@@ -191,6 +199,7 @@ def batch_data(filename: str):
         #     for i in range(100):
         #         dl.append({'status': 'success', 'msg': 'operation mode ok'})
         #     data['data'] = dl
+        os.chdir(path)
         file = open(filename, 'r')
         ls_ = file.read()
         data = json.loads(ls_)
@@ -206,21 +215,15 @@ def batch_data(filename: str):
 
 
 def xiaoshuo():
-    path = os.getcwd() + '\\xiaoshuo'
-    os.mkdir(path)
-    os.chdir(path)
-    file = open('dd.txt', 'w')
-    file.write('111')
-    file.close()
-
-    file1 = open(path + '\\dd.txt', 'r')
-    print(file1.read())
-    file1.close()
-    print('success')
+    if os.path.exists('0.txt'):
+        file = open('0.txt')
+        print(tuple(eval(file.read())))
+        file.close()
+    else:
+        print('is not exists')
 
 
 if __name__ == '__main__':
-    xiaoshuo();exit()
     ls: list = []
     suffix = 99
     min_num = 99999

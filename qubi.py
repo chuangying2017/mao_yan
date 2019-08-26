@@ -182,6 +182,7 @@ def write_to_csvRows(content, fieldnames):
 
 
 if __name__ == '__main__':
+    print('tet');exit()
     ls: list = []
     suffix = 99
     min_num = 99999

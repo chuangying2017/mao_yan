@@ -51,8 +51,8 @@ def fetch_fiction(tup: tuple = (0, 2)):
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--disable-gpu')
     browser = webdriver.Chrome(options=chrome_options)
-    new_url = url + str(tup[0]) + '_' + str(tup[1]) + '/'
-    print(new_url)
+    page_code = str(tup[0]) + '_' + str(tup[1])
+    new_url = url + page_code + '/'
     try:
         browser.get(new_url)
         id_list = browser.find_element_by_id('list')
@@ -80,9 +80,9 @@ def fetch_fiction(tup: tuple = (0, 2)):
 
         for l in dd:
             storage_ls.append((l.find_element(By.TAG_NAME, 'a').get_attribute('href'), l.text))
-
+        print('准备制作....' + page_code)
         for k, d in enumerate(storage_ls):
-            print('制作文章中...' + d[1])
+            print('制作文章中...' + d[1] + ' ---' + page_code)
             fiction_chapter: dict = {
                 'title': d[1]
             }
@@ -95,13 +95,16 @@ def fetch_fiction(tup: tuple = (0, 2)):
             print('完成小部分.....' + str(k+1))
         fiction['data'] = dt
         path = os.getcwd() + '\\xiaoshuo'
+        if ~os.path.exists('xiaoshuo'):
+            os.mkdir('xiaoshuo')
         os.chdir(path)
         filename = str(fiction['title']) + '.txt'
         f = open(filename, 'w+')
         f.write(json.dumps(fiction))
         f.close()
         try:
-            batch_data(filename, path)
+            # batch_data(filename, path)
+            pass
         except EnvironmentError:
             print('环境出错')
     except TimeoutException:
@@ -113,30 +116,33 @@ def fetch_fiction(tup: tuple = (0, 2)):
     print('文章制作完成...')
 
 
-def func_forward(tup: tuple = (0, 3)):
-    new_num = 0
-    if tup[0] == 0:
-        new_num = 4
-    origin = 10
+def func_forward(tup: tuple = (0, 1, 9, 99999)):
+    new_num = 1
     filename = str(tup[0]) + '.txt'
     back_tup = tup
     if os.path.exists(filename):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
-        new_tup = tuple(eval(read_line))
-        tup[0] = new_tup[0]
-        new_num = new_tup[1]
-        if len(tup) < 1:
-            tup = back_tup
+        if len(read_line) < 1:
+            new_tup = back_tup
+        else:
+            new_tup = tuple(eval(read_line))
+        tup[0] = new_tup[0]  # 页码
+        new_num = new_tup[1]  # 起点数量
     else:
         open_file = open(filename, 'w+')
 
     origin_vs = tup[0]
-    vs = 10 + origin_vs
+    vs = tup[2]
 
     for i in range(origin_vs, vs):
-        for j in range(new_num, tup[1]):
-            tup1 = (i, j + 1)
+        for j in range(new_num, tup[3]):
+            tup1 = (i, j, tup[2], tup[3])
+            open_file.seek(0)
+            open_file.truncate()
+            open_file.write(','.join('%s' % id for id in tup1))
+            open_file.close()
+            open_file = open(filename, 'r+')
             print(tup1)
             try:
                 fetch_fiction(tup1)
@@ -144,15 +150,15 @@ def func_forward(tup: tuple = (0, 3)):
                 print('数据库插入异常')
             finally:
                 print('继续前进....' + str(i) + '_' + str(tup1[1]))
-                open_file.seek(0)
-                open_file.truncate()
-                open_file.write(','.join('%s' % id for id in tup1))
-                open_file.close()
-                open_file = open(filename, 'r+')
             # time.sleep(random.uniform(0.5, 1.8))
         print('结束这一次...' + str(i) + '_' + str(tup1[1]))
-        filename = str(i) + '.txt'
-        open_file = open(filename, 'w+')
+        open_file.close()
+        terminal = i + 1
+        if i == vs:
+            break
+        else:
+            filename = str(terminal) + '.txt'
+            open_file = open(filename, 'w+')
     open_file.close()
 
 
@@ -224,15 +230,21 @@ def xiaoshuo():
 
 
 if __name__ == '__main__':
+    ozer = open('0.txt')
+    line = ozer.readline()
+    print(line)
+    print(len(line))
+    ozer.close()
+    exit()
     ls: list = []
     suffix = 99
     min_num = 99999
     v = 10
     while suffix > 9:
         suffix = suffix - v
-        ls.append((suffix, min_num))
+        ls.append((suffix, 1, suffix + v, min_num))
         if suffix <= 9:
-            ls.append((0, min_num))
+            ls.append((0, 1, 9, min_num))
     ls.sort()
     pool = Pool(processes=10)
     pool.map(func_forward, ls)

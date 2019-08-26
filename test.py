@@ -112,7 +112,7 @@ def fetch_fiction(tup: tuple = (0, 2)):
         except Exception as e:
             print('异常001', e.__str__())
     except TimeoutException:
-        print('request page Time Out')
+        print('request page Time Out') # 这里需要做一些重复请求工作
     except NoSuchElementException:
         print('网页元素没找到')
     finally:

@@ -98,9 +98,11 @@ def fetch_fiction(tup: tuple = (0, 2)):
             print('准备插入数据...')
             fiction['data'] = dt
             path = set_path('xiaoshuo')
+            print(path)
             if bool(1-os.path.exists(path)):
+                print('创建了文件夹  ', path)
                 os.mkdir('xiaoshuo')
-            os.chdir(path)
+            os.chdir(path)  # 这里有问题会递归创建文件夹 紧急处理
             filename = str(fiction['title']) + '.txt'
             f = open(filename, 'w+')
             f.write(json.dumps(fiction))

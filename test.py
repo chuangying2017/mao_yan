@@ -35,6 +35,7 @@ from pyquery import PyQuery
 import time
 from multiprocessing import Pool
 import random
+import platform
 
 
 
@@ -80,7 +81,7 @@ def fetch_fiction(tup: tuple = (0, 2)):
 
         for l in dd:
             storage_ls.append((l.find_element(By.TAG_NAME, 'a').get_attribute('href'), l.text))
-        print('准备制作....' + page_code)
+        print('准备制作....' + fiction['title'] + '快开始了加油~~~!' + page_code)
         for k, d in enumerate(storage_ls):
             print('制作文章中...' + d[1] + ' ---' + page_code)
             fiction_chapter: dict = {
@@ -93,20 +94,27 @@ def fetch_fiction(tup: tuple = (0, 2)):
             fiction_chapter['content'] = content
             dt.append(fiction_chapter)
             print('完成小部分.....' + str(k+1))
-        fiction['data'] = dt
-        path = os.getcwd() + '\\xiaoshuo'
-        if ~os.path.exists('xiaoshuo'):
-            os.mkdir('xiaoshuo')
-        os.chdir(path)
-        filename = str(fiction['title']) + '.txt'
-        f = open(filename, 'w+')
-        f.write(json.dumps(fiction))
-        f.close()
         try:
+            print('准备插入数据...')
+            fiction['data'] = dt
+            path = os.getcwd()
+            if platform.system() == 'Windows':
+                path += '\\xiaoshuo'
+            elif platform.system() == 'Linux':
+                path += '/xiaoshuo'
+            else:
+                path += '/xiaoshuo'
+            if bool(1-os.path.exists(path)):
+                os.mkdir('xiaoshuo')
+            os.chdir(path)
+            filename = str(fiction['title']) + '.txt'
+            f = open(filename, 'w+')
+            f.write(json.dumps(fiction))
+            f.close()
+            print('插入完成....')
             # batch_data(filename, path)
-            pass
-        except EnvironmentError:
-            print('环境出错')
+        except Exception as e:
+            print('异常001', e.__str__())
     except TimeoutException:
         print('request page Time Out')
     except NoSuchElementException:
@@ -119,20 +127,17 @@ def fetch_fiction(tup: tuple = (0, 2)):
 def func_forward(tup: tuple = (0, 1, 9, 99999)):
     new_num = 1
     filename = str(tup[0]) + '.txt'
-    back_tup = tup
     if os.path.exists(filename):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
-        if len(read_line) < 1:
-            new_tup = back_tup
-        else:
-            new_tup = tuple(eval(read_line))
-        tup[0] = new_tup[0]  # 页码
-        new_num = new_tup[1]  # 起点数量
+        if len(read_line) > 1:
+            tup = tuple(eval(read_line))
+        new_num += tup[1]
     else:
         open_file = open(filename, 'w+')
 
     origin_vs = tup[0]
+
     vs = tup[2]
 
     for i in range(origin_vs, vs):
@@ -230,11 +235,7 @@ def xiaoshuo():
 
 
 if __name__ == '__main__':
-    ozer = open('0.txt')
-    line = ozer.readline()
-    print(line)
-    print(len(line))
-    ozer.close()
+    func_forward((89, 374))
     exit()
     ls: list = []
     suffix = 99

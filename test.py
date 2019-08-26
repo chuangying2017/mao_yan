@@ -97,13 +97,7 @@ def fetch_fiction(tup: tuple = (0, 2)):
         try:
             print('准备插入数据...')
             fiction['data'] = dt
-            path = os.getcwd()
-            if platform.system() == 'Windows':
-                path += '\\xiaoshuo'
-            elif platform.system() == 'Linux':
-                path += '/xiaoshuo'
-            else:
-                path += '/xiaoshuo'
+            path = set_path('xiaoshuo')
             if bool(1-os.path.exists(path)):
                 os.mkdir('xiaoshuo')
             os.chdir(path)
@@ -124,15 +118,26 @@ def fetch_fiction(tup: tuple = (0, 2)):
     print('文章制作完成...')
 
 
+def set_path(filename: str) -> str:
+    path: str = os.getcwd()
+    if platform.system() == 'Windows':
+        path += '\\' + filename
+    elif platform.system() == 'Linux':
+        path += '/' + filename
+    else:
+        path += '/' + filename
+    return path
+
+
 def func_forward(tup: tuple = (0, 1, 9, 99999)):
     new_num = 1
-    filename = str(tup[0]) + '.txt'
+    filename = set_path(str(tup[0]) + '.txt')
     if os.path.exists(filename):
         open_file = open(filename, 'r+')
         read_line = open_file.readline()
         if len(read_line) > 1:
             tup = tuple(eval(read_line))
-        new_num += tup[1]
+        new_num = tup[1]
     else:
         open_file = open(filename, 'w+')
 
@@ -162,7 +167,7 @@ def func_forward(tup: tuple = (0, 1, 9, 99999)):
         if i == vs:
             break
         else:
-            filename = str(terminal) + '.txt'
+            filename = set_path(str(terminal) + '.txt')
             open_file = open(filename, 'w+')
     open_file.close()
 
